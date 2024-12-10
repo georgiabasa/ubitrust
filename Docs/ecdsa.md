@@ -1,6 +1,6 @@
-# UBI ECDSA Documentation
+# UBITRUST ECDSA Documentation
 
-This header file defines the structures and functions used for ECDSA (Elliptic Curve Digital Signature Algorithm) operations in the UBI Crypt library.
+This header file defines the structures and functions used for ECDSA (Elliptic Curve Digital Signature Algorithm) operations in the UBITRUST Crypt library.
 
 ## Structures
 

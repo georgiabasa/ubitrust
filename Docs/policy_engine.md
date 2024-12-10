@@ -1,6 +1,6 @@
-# UBI Policy Engine Documentation
+# UBITRUST Policy Engine Documentation
 
-This library provides structures and functions for managing policy sessions and signed policy validation in the UBI Crypt library. The header defines data types and methods to handle secure sessions, policy signatures, and policy digest calculations.
+This library provides structures and functions for managing policy sessions and signed policy validation in the UBITRUST Crypt library. The header defines data types and methods to handle secure sessions, policy signatures, and policy digest calculations.
 
 ---
 

@@ -1,6 +1,6 @@
-# UBI KDF Documentation
+# UBITRUST KDF Documentation
 
-This header file defines the structures and functions used for Key Derivation Function (KDF) operations in the UBI Crypt library.
+This header file defines the structures and functions used for Key Derivation Function (KDF) operations in the UBITRUST Crypt library.
 
 ## Structures
 

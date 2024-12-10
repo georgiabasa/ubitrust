@@ -1,6 +1,6 @@
-# UBI Numeric Documentation
+# UBITRUST Numeric Documentation
 
-This header file defines the structures and functions used for numeric operations in the UBI Crypt library.
+This header file defines the structures and functions used for numeric operations in the UBITRUST Crypt library.
 
 ## Structures
 

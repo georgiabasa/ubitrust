@@ -1,4 +1,4 @@
-# UBI Keys Library Documentation
+# UBITRUST Keys Library Documentation
 
 This library provides data structures and functions to support cryptographic key operations, including public key computation, attestation key management, and migratable key handling. Below is an overview of the structures and functions defined in the header file.
 

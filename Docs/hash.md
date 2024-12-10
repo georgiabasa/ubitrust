@@ -1,6 +1,6 @@
-# UBI Hash Documentation
+# UBITRUST Hash Documentation
 
-This header file defines the structures and functions used for SHA-256 hashing in the UBI Crypt library.
+This header file defines the structures and functions used for SHA-256 hashing in the UBITRUST Crypt library.
 
 ## Structures
 

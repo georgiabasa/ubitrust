@@ -1,6 +1,6 @@
-# UBI RSA Documentation
+# UBITRUST RSA Documentation
 
-This library provides data structures and functions for performing RSA encryption and decryption operations in the UBI Crypt library. It defines input and output types for both encryption and decryption, as well as functions to execute these operations.
+This library provides data structures and functions for performing RSA encryption and decryption operations in the UBITRUST Crypt library. It defines input and output types for both encryption and decryption, as well as functions to execute these operations.
 
 ---
 

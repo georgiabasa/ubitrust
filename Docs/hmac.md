@@ -1,6 +1,6 @@
-# UBI HMAC Documentation
+# UBITRUST HMAC Documentation
 
-This header file defines the structures and functions used for HMAC-SHA256 operations in the UBI Crypt library.
+This header file defines the structures and functions used for HMAC-SHA256 operations in the UBITRUST Crypt library.
 
 ## Structures
 

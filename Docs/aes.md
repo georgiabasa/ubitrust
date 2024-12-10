@@ -1,6 +1,6 @@
-# UBI AES Documentation
+# UBITRUST AES Documentation
 
-This header file defines the structures and functions used for AES encryption and decryption in the UBI Crypt library.
+This header file defines the structures and functions used for AES encryption and decryption in the UBITRUST Crypt library. Specifically, the CBC AES variant is used, with mbedtls_aes_crypt_cbc.
 
 ## Structures
 

@@ -1,8 +1,6 @@
-# UBI EC Documentation
+# UBITRUST EC Documentation
 
-This header file defines the structures and functions used for elliptic curve operations in the UBI Crypt library.
-
-
+This header file defines the structures and functions used for elliptic curve operations in the UBITRUST Crypt library. More elliptic curves will be supported in future releases.
 
 ## Functions
 

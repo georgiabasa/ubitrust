@@ -1,4 +1,4 @@
-# UBIlib Build and Testing Instructions
+# UBITRUST Build and Testing Instructions
 
 ## Variables
 
@@ -6,6 +6,7 @@
 - **`CROSS_COMPILE`**: Optional variable for cross-compilation. If set, it prefixes the compiler and archiver commands.
 - **`CC`**: The C compiler to use. Defaults to `gcc`, or `$(CROSS_COMPILE)gcc` if `CROSS_COMPILE` is set.
 - **`AR`**: The archiver to use. Defaults to `ar`, or `$(CROSS_COMPILE)ar` if `CROSS_COMPILE` is set.
+- The **`CROSS_COMPILE`** option format should be similar to this example, if wanting to use gcc: CROSS_COMPILE=aarch64-linux-gnu-
 
 ### Compiler Flags
 
@@ -36,8 +37,7 @@ Used for optimized builds:
   - `-fgraphite-identity`, `-floop-nest-optimize`: Use Graphite framework for loop optimizations.
 - Miscellaneous:
   - `-fomit-frame-pointer`: Exclude the frame pointer to reduce overhead.
-  - `-ffunction-sections`, `-fdata-sections`: Place each function and data item in its own section for better dead-code elimination.
-  - `-fprofile-generate`, `-fprofile-use`: Enable profile-guided optimizations.
+  - `-ffunction-sections`, `-fdata-sections`: Place each function and data item in its own section for better dead-code 
 
 ### Setting `CFLAGS`
 The `CFLAGS` variable is determined by the `MODE` setting:
@@ -66,6 +66,13 @@ make MODE=debug
 To build and run the test binaries:
 ```bash
 make MODE=debug BUILD_TEST=1
-./debug 
+./debug.sh 
 ```
 To check the logs go to the valgrind_logs directory 
+
+# TESTING WITH SGX
+```bash
+cd test/gramine/
+sudo ./debug_gramine.sh
+```
+To check the logs go to gramine_logs

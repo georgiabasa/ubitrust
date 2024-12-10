@@ -1,6 +1,6 @@
-# UBI Credential Documentation
+# UBITRUST Credential Documentation
 
-This header file defines the structures and functions used for credential management in the UBI Crypt library.
+This header file defines the structures and functions used for credential management in the UBITRUST Crypt library.
 
 ## Structures
 
