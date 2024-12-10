@@ -4,7 +4,7 @@ AR = $(CROSS_COMPILE)ar
 
 CFLAGS_COMMON = -I$(INCLUDE_DIR) -I$(MBEDTLS_DIR)/include -Wall -Wextra -Wpedantic -Wshadow -Wconversion \
                 -Wstrict-prototypes -Wmissing-prototypes -Wformat=2 -Wpointer-arith \
-                -Wcast-align -std=c11 -Wno-null-dereference -Wno-missing-profile -Wmaybe-uninitialized
+                -Wcast-align -std=c11 -Wno-maybe-uninitialized
 
 
 # Debug mode flags
