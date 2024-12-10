@@ -1,0 +1,24 @@
+# Variables
+GRAMINE_LOG_LEVEL = debug
+BUILD_DIR = build
+
+.PHONY: all
+all: ubitrust_test.manifest ubitrust_test.manifest.sgx ubitrust_test.sig
+
+# Generate manifest file
+ubitrust_test.manifest: ubitrust_test.manifest.template
+	gramine-manifest \
+		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
+		-Dentrypoint=$(ENTRYPOINT) \
+		$< > $@
+
+# Generate SGX manifest and signature
+ubitrust_test.manifest.sgx ubitrust_test.sig: ubitrust_test.manifest
+	gramine-sgx-sign \
+		--manifest $< \
+		--output $<.sgx
+
+.PHONY: clean
+clean:
+	$(RM) *.manifest *.manifest.sgx *.sig OUTPUT* *.PID TEST_STDOUT TEST_STDERR
+	$(RM) -rf gramine_logs
