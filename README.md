@@ -18,7 +18,6 @@ These flags are included in all build modes:
   - `-Wall`: Enable most warnings.
   - `-Wextra`: Enable extra warnings.
   - `-Werror`: Treat warnings as errors.
-  - `-Wno-null-dereference`, `-Wno-missing-profile`, `-Wno-maybe-uninitialized`: Suppress specific warnings.
 - `-std=c11`: Enforce the C11 standard.
 
 #### Debugging Flags (`DEBUG_FLAGS`)
