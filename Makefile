@@ -11,7 +11,7 @@ CFLAGS_COMMON = -I$(INCLUDE_DIR) -I$(MBEDTLS_DIR)/include -Wall -Wextra -Wpedant
 DEBUG_FLAGS = -g -O0 -DDEBUG
 
 # Optimization mode flags
-OPTIMIZE_FLAGS = -O3 -Ofast -funroll-loops -finline-functions -flto -march=native \
+OPTIMIZE_FLAGS = -O3 -Ofast -funroll-loops -finline-functions -march=native \
                  -mtune=native -fgraphite-identity -floop-nest-optimize \
                  -fomit-frame-pointer -ffunction-sections -fdata-sections 
 
