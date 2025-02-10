@@ -62,13 +62,16 @@ int main(void) {
     } else if (result == UBI_POLICY_START_ERROR) {
         printf("Policy session start failed.\nTest Failed\n");
     }
-    ubi_buffer messages[3];
-    messages[0].buffer_len = CC_LENGTH;
-    messages[0].buffer = (uint8_t *)POLICY_SIGNED_CC;
-    messages[1].buffer_len = NONCE_SIZE;
-    messages[1].buffer = (uint8_t *)(*out).nonce->buffer;
-    messages[2].buffer_len = SHA256_DIGEST_LENGTH;
-    messages[2].buffer = (uint8_t *)digest_bytes;
+    ubi_buffer **messages = (struct ubi_buffer **)calloc(3, sizeof(struct ubi_buffer *));
+    for (int i = 0; i < 3; i++) {
+        messages[i] = (struct ubi_buffer *)calloc(1, sizeof(struct ubi_buffer));
+    }
+    messages[0]->buffer_len = CC_LENGTH;
+    messages[0]->buffer = (uint8_t *)POLICY_SIGNED_CC;
+    messages[1]->buffer_len = NONCE_SIZE;
+    messages[1]->buffer = (uint8_t *)(*out).nonce->buffer;
+    messages[2]->buffer_len = SHA256_DIGEST_LENGTH;
+    messages[2]->buffer = (uint8_t *)digest_bytes;
     ubi_sha_in  sha_in = {
         .messages = messages,
         .messages_len = 3
@@ -104,7 +107,7 @@ int main(void) {
     struct ubi_policy_signed_in policy_signed_in = {
         .session_handle = (*out).session_handle,
         .curve_type = BNP_256,
-        .digest = &messages[2],
+        .digest = messages[2],
         .signature_r = (*sign_out).signature_r,
         .signature_s = (*sign_out).signature_s,
         .public_key = &public_key
@@ -132,5 +135,9 @@ int main(void) {
     free(sign_out);
     free(policy_digest->buffer);
     free(policy_digest);
+    for (int i = 0; i < 3; i++) {
+        free(messages[i]);
+    }
+    free(messages);
     return result;
 }

@@ -113,56 +113,49 @@ cleanup:
     return ret;
 }
 
-
+/**
+ * Verifies a signed policy using ECDSA and updates the session digest.
+ * 
+ * @param in  Input structure containing the signed policy and related data.
+ * @param out Output parameter (currently unused).
+ * @return    UBI_SUCCESS on success, or an appropriate error code on failure.
+ */
 int ubi_policy_signed(struct ubi_policy_signed_in *in, void *out) {
     int ret = UBI_SUCCESS;
 
     for (int i = 0; i < MAX_POLICY_SESSIONS; i++) {
         if (memcmp(ubi_session_handles[i].session_handle, (*in).session_handle->buffer, (*in).session_handle->buffer_len) == 0) {
-            ubi_buffer messages[3];
-            messages[0].buffer = (uint8_t *)calloc(1,CC_LENGTH);
-            if (!messages[0].buffer) {
-                ret = UBI_MEM_ERROR;
-                goto cleanup;
-            }
-            memcpy(messages[0].buffer, POLICY_SIGNED_CC, CC_LENGTH);
-            messages[0].buffer_len = CC_LENGTH;
+            
 
-            messages[1].buffer = (uint8_t *)calloc(1,NONCE_SIZE);
-            if (!messages[1].buffer) {
-                ret = UBI_MEM_ERROR;
-                free(messages[0].buffer);
-                messages[0].buffer = NULL;
-                goto cleanup;
-            }
-            memcpy(messages[1].buffer, ubi_session_handles[i].nonce, NONCE_SIZE);
-            messages[1].buffer_len = NONCE_SIZE;
 
-            messages[2] = *(*in).digest;
-
-            ubi_sha_in sha_in = {
-                .messages = messages,
-                .messages_len = 3
-            };
+            ubi_sha_in sha_in;
+            sha_in.messages = (struct ubi_buffer **)calloc(3, sizeof(struct ubi_buffer *));
+            sha_in.messages[0] = (struct ubi_buffer *)calloc(1, sizeof(struct ubi_buffer));
+            sha_in.messages[0]->buffer_len = CC_LENGTH;
+            sha_in.messages[0]->buffer = (uint8_t *)POLICY_SIGNED_CC;
+            sha_in.messages[1] = (struct ubi_buffer *)calloc(1, sizeof(struct ubi_buffer));
+            sha_in.messages[1]->buffer_len = NONCE_SIZE;
+            sha_in.messages[1]->buffer = (uint8_t *)ubi_session_handles[i].nonce;
+            sha_in.messages[2] = (*in).digest;
+            sha_in.messages_len = 3;
             ubi_sha_out *sha_out = NULL;
 
 
             ret = ubi_sha256(&sha_in, &sha_out);
             if (ret != UBI_SUCCESS) {
-                free(messages[0].buffer);
-                messages[0].buffer = NULL;
-                free(messages[1].buffer);
-                messages[1].buffer = NULL;  
+                free(sha_in.messages[0]);
+                free(sha_in.messages[1]);
+                free(sha_in.messages);
                 goto cleanup;
             }
+
 
             ubi_ecdsa_verify_in *verify_in = (struct ubi_ecdsa_verify_in *)calloc(1,sizeof(struct ubi_ecdsa_verify_in));
             if (!verify_in) {
                 ret = UBI_MEM_ERROR;
-                free(messages[0].buffer);
-                messages[0].buffer = NULL;
-                free(messages[1].buffer);
-                messages[1].buffer = NULL;
+                free(sha_in.messages[0]);
+                free(sha_in.messages[1]);
+                free(sha_in.messages);
                 goto cleanup;
             }
 
@@ -177,10 +170,9 @@ int ubi_policy_signed(struct ubi_policy_signed_in *in, void *out) {
             ret = ubi_ecdsa_verify(verify_in, &verify_out);
             if (ret != UBI_SUCCESS) {
                 ret = UBI_VERIFY_ERROR;
-                free(messages[0].buffer);
-                messages[0].buffer = NULL;
-                free(messages[1].buffer);
-                messages[1].buffer = NULL;
+                free(sha_in.messages[0]);
+                free(sha_in.messages[1]);
+                free(sha_in.messages);
                 free((*sha_out).digest->buffer);
                 (*sha_out).digest->buffer = NULL;
                 free((*sha_out).digest);
@@ -193,17 +185,13 @@ int ubi_policy_signed(struct ubi_policy_signed_in *in, void *out) {
             }
 
             // Calculate the hash of the concatenation of POLICY_SIGNED_CC and public_key
-            ubi_buffer hash_input[2];
-            hash_input[0].buffer = (uint8_t *)POLICY_SIGNED_CC;
-            hash_input[0].buffer_len = CC_LENGTH;
-
-            hash_input[1].buffer = (uint8_t *)(*in).public_key->buffer;
-            hash_input[1].buffer_len = (*in).public_key->buffer_len;
-
-            ubi_sha_in concat_sha_in = {
-                .messages = hash_input,
-                .messages_len = 2
-            };
+            ubi_sha_in concat_sha_in;
+            concat_sha_in.messages = (struct ubi_buffer **)calloc(2, sizeof(struct ubi_buffer *));
+            concat_sha_in.messages[0] = (struct ubi_buffer *)calloc(1, sizeof(struct ubi_buffer));
+            concat_sha_in.messages[0]->buffer_len = CC_LENGTH;
+            concat_sha_in.messages[0]->buffer = (uint8_t *)POLICY_SIGNED_CC;
+            concat_sha_in.messages[1] = (*in).public_key;
+            concat_sha_in.messages_len = 2;
             ubi_sha_out *concat_sha_out = NULL;
 
             ret = ubi_sha256(&concat_sha_in, &concat_sha_out);
@@ -212,10 +200,9 @@ int ubi_policy_signed(struct ubi_policy_signed_in *in, void *out) {
             }
 
             // Clean up dynamically allocated memory
-            free(messages[0].buffer);
-            messages[0].buffer = NULL;
-            free(messages[1].buffer);
-            messages[1].buffer = NULL;
+            free(sha_in.messages[0]);
+            free(sha_in.messages[1]);
+            free(sha_in.messages);
             free((*sha_out).digest->buffer);
             (*sha_out).digest->buffer = NULL;   
             free((*sha_out).digest);
@@ -229,6 +216,9 @@ int ubi_policy_signed(struct ubi_policy_signed_in *in, void *out) {
             free((*concat_sha_out).digest);
             (*concat_sha_out).digest = NULL;
             free(concat_sha_out);   
+            free(concat_sha_in.messages[0]);
+            free(concat_sha_in.messages);
+
             concat_sha_out = NULL;
             return ret;
         }

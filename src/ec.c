@@ -124,13 +124,8 @@ cleanup:
 }
 
 
-int ubi_get_ecp_size(mbedtls_ecp_point *ecp, size_t *ecp_size){
-    size_t ecp_x_size = mbedtls_mpi_size(&(*ecp).MBEDTLS_PRIVATE(X));
-    size_t ecp_y_size = mbedtls_mpi_size(&(*ecp).MBEDTLS_PRIVATE(Y));
-    size_t ecp_z_size = mbedtls_mpi_size(&(*ecp).MBEDTLS_PRIVATE(Z));
-
-    *ecp_size = ecp_x_size+ecp_y_size+ecp_z_size;
-
+int ubi_get_ecp_size(mbedtls_ecp_group *grp, size_t *ecp_size){
+    *ecp_size = 2*(*grp).pbits/8 + 1;
     return UBI_SUCCESS;
 }
 
@@ -205,7 +200,7 @@ int ubi_compute_group_generator(struct ubi_compute_group_generator_in *in, struc
         ret = UBI_MEM_ERROR;
         goto cleanup;
     }
-    ubi_get_ecp_size(Q, &(**out).generator->buffer_len);
+    ubi_get_ecp_size(grp, &(**out).generator->buffer_len);
     (**out).generator->buffer = (uint8_t *)calloc((**out).generator->buffer_len, sizeof(uint8_t));
     if ((**out).generator->buffer == NULL) {
         ret = UBI_MEM_ERROR;
@@ -253,13 +248,13 @@ int free_ubi_compute_group_generator_out(struct ubi_compute_group_generator_out 
 
 int ubi_commit(struct ubi_commit_in *in, struct ubi_commit_out **out){
     int ret = UBI_SUCCESS;
-    size_t olen;
     mbedtls_ecp_point *R = (mbedtls_ecp_point *)calloc(1,sizeof(mbedtls_ecp_point));
     mbedtls_ecp_point *Q = (mbedtls_ecp_point *)calloc(1,sizeof(mbedtls_ecp_point));
     mbedtls_ecp_point_init(R);
     mbedtls_ecp_point_init(Q);
     mbedtls_mpi *d = (mbedtls_mpi *)calloc(1,sizeof(mbedtls_mpi));
     mbedtls_mpi_init(d);
+    size_t olen;
 
 
     mbedtls_ecp_group *grp = NULL;
@@ -301,13 +296,13 @@ int ubi_commit(struct ubi_commit_in *in, struct ubi_commit_out **out){
             ret = UBI_MEM_ERROR;
             goto cleanup;
         }
-        ubi_get_ecp_size(R, &(**out).commitment[i]->buffer_len);
-        (**out).commitment[i]->buffer = (uint8_t *)calloc(1, (**out).commitment[i]->buffer_len * sizeof(uint8_t));
+        ubi_get_ecp_size(grp, &(**out).commitment[i]->buffer_len);
+        (**out).commitment[i]->buffer = (uint8_t *)calloc((**out).commitment[i]->buffer_len, sizeof(uint8_t));
         if ((**out).commitment[i]->buffer == NULL) {
-            free((**out).commitment[i]->buffer);
             ret = UBI_MEM_ERROR;
             goto cleanup;
         }
+
         if((ret = mbedtls_ecp_point_write_binary(grp, R, MBEDTLS_ECP_PF_UNCOMPRESSED, &olen, (**out).commitment[i]->buffer, (**out).commitment[i]->buffer_len)) != UBI_SUCCESS){
             ret = UBI_WRITE_BIN_ERROR;
             goto cleanup;
@@ -400,8 +395,8 @@ int ubi_ec_point_add(struct ubi_ec_point_add_in *in, struct ubi_ec_point_add_out
         ret = UBI_MEM_ERROR;
         goto cleanup;
     }
-    ubi_get_ecp_size(R, &(**out).point->buffer_len);
-    (**out).point->buffer = (uint8_t *)calloc(1, (**out).point->buffer_len * sizeof(uint8_t));
+    ubi_get_ecp_size(grp, &(**out).point->buffer_len);
+    (**out).point->buffer = (uint8_t *)calloc((**out).point->buffer_len, sizeof(uint8_t));
     if ((**out).point->buffer == NULL) {
         ret = UBI_MEM_ERROR;
         goto cleanup;

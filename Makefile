@@ -2,7 +2,9 @@ CROSS_COMPILE ?=
 CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
 
-CFLAGS_COMMON = -I$(INCLUDE_DIR) -I$(MBEDTLS_DIR)/include -Wall -Wextra -Wpedantic -Wshadow -Wconversion \
+
+
+CFLAGS_COMMON = -I$(INCLUDE_DIR) -I$(MBEDTLS_DIR)/include -I$(MIRACL_BUILD_DIR) -Wall -Wextra -Wpedantic -Wshadow -Wconversion \
                 -Wstrict-prototypes -Wmissing-prototypes -Wformat=2 -Wpointer-arith \
                 -Wcast-align -std=c11 -Wno-maybe-uninitialized
 
@@ -11,9 +13,9 @@ CFLAGS_COMMON = -I$(INCLUDE_DIR) -I$(MBEDTLS_DIR)/include -Wall -Wextra -Wpedant
 DEBUG_FLAGS = -g -O0 -DDEBUG
 
 # Optimization mode flags
-OPTIMIZE_FLAGS = -O3 -Ofast -funroll-loops -finline-functions -march=native \
+OPTIMIZE_FLAGS = -O3 #-Ofast -funroll-loops -finline-functions -march=native \
                  -mtune=native -fgraphite-identity -floop-nest-optimize \
-                 -fomit-frame-pointer -ffunction-sections -fdata-sections 
+                 -fomit-frame-pointer -ffunction-sections -fdata-sections
 
 # Set CFLAGS based on MODE
 ifeq ($(MODE),debug)
@@ -58,18 +60,32 @@ MBEDTLS_TAR := $(MBEDTLS_NAME).tar.bz2
 MBEDTLS_URL := https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$(MBEDTLS_VERSION)/$(MBEDTLS_NAME).tar.bz2
 MBEDTLS_SHA_URL := https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$(MBEDTLS_VERSION)/$(MBEDTLS_NAME)-sha256sum.txt
 
+
+MIRACL_DIR := $(BUILD_DIR)/miracl-core
+MIRACL_REPO := https://github.com/miracl/core.git
+
+# System bitness detection
+BITNESS := $(shell getconf LONG_BIT)
+
+# Directories
+MIRACL_BUILD_DIR := $(MIRACL_DIR)/c
+
 # Check if any existing mbedtls 3.6.x directory exists
 EXISTING_DIR := $(shell find . -maxdepth 2 -type d -name "mbedtls-$(MBEDTLS_MAJOR_VERSION).*")
 
 # External libraries to link
-LDFLAGS = -L$(MBEDTLS_DIR)/library -lmbedtls -lmbedcrypto
+LDFLAGS = -L$(MBEDTLS_DIR)/library -lmbedtls -lmbedcrypto -L$(MIRACL_BUILD_DIR) -l:core.a
 
 .PHONY: all clean
 
 # Targets
-all: print-art $(BUILD_DIR) $(MBEDTLS_DIR)/Makefile lib
+all: print-art $(BUILD_DIR) $(MBEDTLS_DIR)/Makefile miracl lib
 
-
+$(MIRACL_DIR):
+	@echo "Cloning MIRACL Core repository..."
+	@{ \
+		git clone --depth 1 $(MIRACL_REPO) $(MIRACL_DIR); \
+	}
 	
 $(MBEDTLS_DIR)/Makefile: $(MBEDTLS_DIR)
 	@$(MAKE) -C $(MBEDTLS_DIR) CROSS_COMPILE=$(CROSS_COMPILE) CC=$(CROSS_COMPILE)gcc AR=$(CROSS_COMPILE)ar > /dev/null
@@ -103,6 +119,17 @@ $(MBEDTLS_DIR):
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
+
+miracl: $(MIRACL_DIR)
+	@if [ -f "$(MIRACL_BUILD_DIR)/core.a" ]; then \
+		echo "MIRACL Core is already built. Skipping build..."; \
+	else \
+		echo "Building MIRACL Core for $(BITNESS)-bit system..."; \
+		{ \
+			cd $(MIRACL_BUILD_DIR); \
+			python3 config$(BITNESS).py test; \
+		}; \
+	fi
 
 lib: $(OBJ_FILES)
 	$(AR) rcs $(STATIC_LIB) $(OBJ_FILES)

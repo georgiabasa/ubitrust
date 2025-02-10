@@ -30,11 +30,12 @@ int main(void) {
     }
 
     // Create ubi_sha256_in structure
-    ubi_sha_in in = {
-        .messages = messages,
-        .messages_len = 50
-    };
-
+    ubi_sha_in in;
+    in.messages = (ubi_buffer **)calloc(50, sizeof(ubi_buffer *));
+    for (int i = 0; i < 50; i++) {
+        in.messages[i] = &messages[i];
+    }
+    in.messages_len = 50;
     // Prepare output structure
     ubi_sha_out *out = NULL;
 
@@ -51,5 +52,6 @@ int main(void) {
         printf("Test Failed\n");
     }
     free_ubi_sha_out(out);
+    free(in.messages);
     return result;
 }

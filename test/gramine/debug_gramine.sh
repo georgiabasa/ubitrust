@@ -41,6 +41,9 @@ for binary in "$BUILD_DIR"/*; do
         else
             echo "Error testing $binary. Check logs in $log_file for details."
         fi
+        rm -f ubitrust_test.manifest    
+        rm -f ubitrust_test.manifest.sgx
+        rm -f ubitrust_test.sig
     else
         echo "Skipping non-executable file: $binary"
     fi

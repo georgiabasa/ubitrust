@@ -5,6 +5,7 @@
 #include <ubi_crypt/kdf.h>
 #include <ubi_crypt/hmac.h>
 #include <ubi_common/errors.h>
+#include <ubi_common/structs.h>
 
 
 void free_ubi_kdf_out(struct ubi_kdf_out *out) {

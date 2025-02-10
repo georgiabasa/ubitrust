@@ -37,7 +37,7 @@ int ubi_sha256(struct ubi_sha_in *in, struct ubi_sha_out **out) {
     }
 
     for (size_t i = 0; i < (*in).messages_len; i++) {
-        if (mbedtls_sha256_update(context, (*in).messages[i].buffer, (*in).messages[i].buffer_len) != 0) {
+        if (mbedtls_sha256_update(context, (*in).messages[i]->buffer, (*in).messages[i]->buffer_len) != 0) {
             ret = UBI_SHA256_ERROR;
             goto cleanup;
         }

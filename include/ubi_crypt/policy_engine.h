@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <ubi_common/structs.h>
+#include <ubi_common/macros.h>
 
 typedef struct ubi_policy_session
 {

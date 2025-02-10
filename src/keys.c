@@ -177,7 +177,7 @@ int ubi_compute_public_key(struct ubi_compute_public_key_in *in, struct ubi_comp
     }
     *out = (struct ubi_compute_public_key_out *)calloc(1,sizeof(struct ubi_compute_public_key_out));
     (**out).public_key = (struct ubi_buffer *)calloc(1,sizeof(struct ubi_buffer));
-    ubi_get_ecp_size(public_key, &(**out).public_key->buffer_len);
+    ubi_get_ecp_size(grp, &(**out).public_key->buffer_len);
     (**out).public_key->buffer = (uint8_t *)calloc((**out).public_key->buffer_len, sizeof(uint8_t));
     ret = mbedtls_ecp_point_write_binary(grp, public_key, MBEDTLS_ECP_PF_UNCOMPRESSED,
                                          &olen, (**out).public_key->buffer, (**out).public_key->buffer_len);

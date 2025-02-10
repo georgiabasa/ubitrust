@@ -27,4 +27,12 @@
 
 #define POLICY_SIGNED_CC "00000121"
 
+#define ECP2_FP256BN_LENGTH 129
+
+#define M_PI 3.14159265358979323846
+
+#define EPSILON 1e-9
+
+#define LN_2 0.69314718056 
+
 #endif

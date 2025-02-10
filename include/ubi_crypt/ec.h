@@ -50,7 +50,7 @@ int ubi_get_ec_group_bnp256(mbedtls_ecp_group **grp);
 
 int free_ubi_ecp_group(mbedtls_ecp_group *grp);
 
-int ubi_get_ecp_size(mbedtls_ecp_point *ecp, size_t *ecp_size);
+int ubi_get_ecp_size(mbedtls_ecp_group *grp, size_t *ecp_size);
 
 int ubi_compute_group_generator(struct ubi_compute_group_generator_in *in, struct ubi_compute_group_generator_out **out);
 

@@ -28,11 +28,11 @@ void test_ubi_compute_group_generator(void) {
     } else {
         printf("ubi_compute_group_generator succeeded\n");
         // Validate the output
-        if (out != NULL && out->generator != NULL && out->generator->buffer != NULL && out->generator->buffer_len > 0) {
-            printf("Generator buffer length: %zu\n", out->generator->buffer_len);
+        if (out != NULL && (*out).generator != NULL && (*out).generator->buffer != NULL && (*out).generator->buffer_len > 0) {
+            printf("Generator buffer length: %zu\n", (*out).generator->buffer_len);
             printf("Generator buffer data: ");
-            for (size_t i = 0; i < out->generator->buffer_len; i++) {
-                printf("%02x", out->generator->buffer[i]);
+            for (size_t i = 0; i < (*out).generator->buffer_len; i++) {
+                printf("%02x", (*out).generator->buffer[i]);
             }
             printf("\n");
         } else {
@@ -254,6 +254,27 @@ printf("Cleaning up\n");
     
 }
 
+void print_ecp_point(const mbedtls_ecp_group *grp, const mbedtls_ecp_point *point);
+
+void print_ecp_point(const mbedtls_ecp_group *grp, const mbedtls_ecp_point *point) {
+    size_t olen;
+    uint8_t buffer[MBEDTLS_ECP_MAX_PT_LEN];
+
+    // Convert the point to a buffer
+    int ret = mbedtls_ecp_point_write_binary(grp, point, MBEDTLS_ECP_PF_UNCOMPRESSED, &olen, buffer, sizeof(buffer));
+    if (ret != 0) {
+        printf("Failed to convert point to buffer: %d\n", ret);
+        return;
+    }
+
+    // Print the buffer
+    printf("Point G: ");
+    for (size_t i = 0; i < olen; i++) {
+        printf(",0x%02x", buffer[i]);
+    }
+    printf("\n");
+}
+
 
 int main(void) {
     mbedtls_ecp_group *grp = NULL;
@@ -261,8 +282,9 @@ int main(void) {
     // Test the get_ec_group_bnp256 function
     int ret = ubi_get_ec_group_bnp256(&grp);
     if (ret == 0) {
+        
         printf("Elliptic curve group BNP256 initialized successfully.\n");
-    
+        print_ecp_point(grp, &grp->G);
         free_ubi_ecp_group(grp);
         free(grp);
     } else {

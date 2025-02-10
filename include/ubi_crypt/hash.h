@@ -9,7 +9,7 @@
 
 typedef struct ubi_sha_in
 {
-    struct ubi_buffer *messages;
+    struct ubi_buffer **messages;
     size_t messages_len;
 }ubi_sha_in;
 
