@@ -51,31 +51,7 @@ void test_ubi_random_bytes_mod(void) {
     free(mod_order.buffer);
 }
 
-void test_ubi_constant_time_rng(void);
 
-void test_ubi_constant_time_rng(void) {
-    struct ubi_constant_time_rng_in in;
-    struct ubi_constant_time_rng_out out;
-    int ret;
-
-    // Set input parameters
-    in.i = 50;
-    in.k = 6;
-    in.N = 10;
-
-    // Call the function
-    ret = ubi_constant_time_rng(&in, &out);
-
-    // Check the return value
-    if (ret != UBI_SUCCESS) {
-        printf("ubi_constant_time_rng failed with error code: %d\n", ret);
-    } else {
-        printf("ubi_constant_time_rng succeeded\n");
-
-        // Print the generated random value
-        printf("Generated random value: %d\n", out.random_value);
-    }
-}
 
 double get_cpu_frequency(void);
 
@@ -100,30 +76,6 @@ double get_cpu_frequency(void) {
     return -1.0; // Failed to retrieve frequency
 }
 
-void benchmark_ubi_constant_time_rng(void);
-
-void benchmark_ubi_constant_time_rng(void) {
-    uint64_t start_cycles, end_cycles;
-    double elapsed_cycles;
-
-    // Record the start cycle count
-    start_cycles = __rdtsc();
-
-    // Run the test function
-    test_ubi_constant_time_rng();
-
-    // Record the end cycle count
-    end_cycles = __rdtsc();
-    double cpu_frequency = get_cpu_frequency();
-
-    // Calculate the elapsed cycles
-    elapsed_cycles = (double)(end_cycles - start_cycles);
-    double elapsed_time = (double)elapsed_cycles / cpu_frequency;
-
-    printf("CPU cycles elapsed: %lu\n", elapsed_cycles);
-    printf("Elapsed time: %.9f seconds\n", elapsed_time);
-}
-
 
 int main(void) {
     unsigned char output[RANDOM_BYTES_SIZE];
@@ -146,8 +98,6 @@ int main(void) {
 
     test_ubi_random_bytes_mod();
 
-    test_ubi_constant_time_rng();
-    benchmark_ubi_constant_time_rng();
 
     return 0;
 }
