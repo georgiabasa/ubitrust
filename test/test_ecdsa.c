@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <ubi_crypt/ec.h>
+#include <ctype.h>
 #include <ubi_crypt/ecdsa.h>
 #include <ubi_common/macros.h>
 #include <ubi_common/structs.h>
@@ -68,14 +68,102 @@ uint8_t value[32] = {
 
 
 
-int main(void) {
+// int main(void) {
+//     ubi_ecdsa_sign_in sign_in;
+//     ubi_ecdsa_sign_out *sign_out = NULL;
+//     ubi_ecdsa_verify_in verify_in;
+//     ubi_ecdsa_verify_out verify_out;
+//     int ret;
+
+//     // Initialize buffers for the input structure
+//     struct ubi_buffer private_key = { .buffer = private_key_bytes, .buffer_len = sizeof(private_key_bytes) };
+//     struct ubi_buffer digest = { .buffer = value, .buffer_len = sizeof(value) };
+//     struct ubi_buffer signature_r_prime = { .buffer = evidence_r, .buffer_len = sizeof(evidence_r) };
+//     struct ubi_buffer signature_s_prime = { .buffer = evidence_s, .buffer_len = sizeof(evidence_s) };
+
+//     sign_in.private_key = &private_key;
+//     sign_in.digest = &digest;
+//     sign_in.curve_type = BNP_256;
+
+//     // Perform ECDSA signing
+//     ret = ubi_ecdsa_sign(&sign_in, &sign_out);
+//     if (ret != UBI_SUCCESS) {
+//         printf("Failed to sign the message. Error code: %d\n", ret);
+//         return ret;
+//     }
+
+//     // Print the generated signature
+//     printf("Signature R (%ld bytes): ", (*sign_out).signature_r->buffer_len);
+//     for (size_t i = 0; i < (*sign_out).signature_r->buffer_len; i++) {
+//         printf("0x%02x, ", (*sign_out).signature_r->buffer[i]);
+//     }
+//     printf("\n");
+
+//     printf("Signature S (%ld bytes): ", (*sign_out).signature_s->buffer_len);
+//     for (size_t i = 0; i < (*sign_out).signature_s->buffer_len; i++) {
+//         printf("0x%02x, ", (*sign_out).signature_s->buffer[i]);
+//     }
+//     printf("\n");
+
+//     // Initialize buffers for the verification input structure
+//     struct ubi_buffer public_key = { .buffer = aa_public_key, .buffer_len = sizeof(aa_public_key) };
+
+//     verify_in.public_key = &public_key;
+//     verify_in.digest = &digest;
+//     verify_in.signature_r = &signature_r_prime;
+//     verify_in.signature_s = &signature_s_prime;
+//     verify_in.curve_type = BNP_256;
+
+//     // Perform ECDSA verification
+//     ret = ubi_ecdsa_verify(&verify_in, &verify_out);
+//     if (ret != UBI_SUCCESS) {
+//         printf("Failed to verify the signature. Error code: %d\n", ret);
+//     } else {
+//         if (verify_out.verification_status == 0) {
+//             printf("Signature verification succeeded.\n");
+//         } else {
+//             printf("Signature verification failed.\n");
+//         }
+//     }
+
+//     free_ubi_ecdsa_sign_out(sign_out);
+
+//     return 0;
+// }
+
+#define HEX_CHAR_TO_BYTE(h, l) ((uint8_t)((isdigit(h) ? h - '0' : tolower(h) - 'a' + 10) << 4 | (isdigit(l) ? l - '0' : tolower(l) - 'a' + 10)))
+int hexstr_to_bytes(const char *hexstr, uint8_t *buf, size_t expected_len);
+
+int hexstr_to_bytes(const char *hexstr, uint8_t *buf, size_t expected_len) {
+    size_t len = strlen(hexstr);
+    if (len != expected_len * 2) return -1;
+    for (size_t i = 0; i < expected_len; i++) {
+        buf[i] = HEX_CHAR_TO_BYTE(hexstr[2 * i], hexstr[2 * i + 1]);
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc == 6) {
+        if (hexstr_to_bytes(argv[1], private_key_bytes, 32) != 0 ||
+            hexstr_to_bytes(argv[2], value, 32) != 0 ||
+            hexstr_to_bytes(argv[3], evidence_r, 32) != 0 ||
+            hexstr_to_bytes(argv[4], evidence_s, 32) != 0 ||
+            hexstr_to_bytes(argv[5], aa_public_key, 65) != 0) {
+            fprintf(stderr, "Invalid hex input\n");
+            return 1;
+        }
+        printf("Using user-provided values.\n");
+    } else {
+        printf("Using hardcoded values.\n");
+    }
+
     ubi_ecdsa_sign_in sign_in;
     ubi_ecdsa_sign_out *sign_out = NULL;
     ubi_ecdsa_verify_in verify_in;
     ubi_ecdsa_verify_out verify_out;
     int ret;
 
-    // Initialize buffers for the input structure
     struct ubi_buffer private_key = { .buffer = private_key_bytes, .buffer_len = sizeof(private_key_bytes) };
     struct ubi_buffer digest = { .buffer = value, .buffer_len = sizeof(value) };
     struct ubi_buffer signature_r_prime = { .buffer = evidence_r, .buffer_len = sizeof(evidence_r) };
@@ -85,27 +173,22 @@ int main(void) {
     sign_in.digest = &digest;
     sign_in.curve_type = BNP_256;
 
-    // Perform ECDSA signing
     ret = ubi_ecdsa_sign(&sign_in, &sign_out);
     if (ret != UBI_SUCCESS) {
         printf("Failed to sign the message. Error code: %d\n", ret);
         return ret;
     }
 
-    // Print the generated signature
     printf("Signature R (%ld bytes): ", (*sign_out).signature_r->buffer_len);
-    for (size_t i = 0; i < (*sign_out).signature_r->buffer_len; i++) {
+    for (size_t i = 0; i < (*sign_out).signature_r->buffer_len; i++)
         printf("0x%02x, ", (*sign_out).signature_r->buffer[i]);
-    }
     printf("\n");
 
     printf("Signature S (%ld bytes): ", (*sign_out).signature_s->buffer_len);
-    for (size_t i = 0; i < (*sign_out).signature_s->buffer_len; i++) {
+    for (size_t i = 0; i < (*sign_out).signature_s->buffer_len; i++)
         printf("0x%02x, ", (*sign_out).signature_s->buffer[i]);
-    }
     printf("\n");
 
-    // Initialize buffers for the verification input structure
     struct ubi_buffer public_key = { .buffer = aa_public_key, .buffer_len = sizeof(aa_public_key) };
 
     verify_in.public_key = &public_key;
@@ -114,7 +197,6 @@ int main(void) {
     verify_in.signature_s = &signature_s_prime;
     verify_in.curve_type = BNP_256;
 
-    // Perform ECDSA verification
     ret = ubi_ecdsa_verify(&verify_in, &verify_out);
     if (ret != UBI_SUCCESS) {
         printf("Failed to verify the signature. Error code: %d\n", ret);
@@ -127,6 +209,5 @@ int main(void) {
     }
 
     free_ubi_ecdsa_sign_out(sign_out);
-
     return 0;
 }

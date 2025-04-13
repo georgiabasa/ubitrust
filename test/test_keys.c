@@ -9,7 +9,7 @@
 
 void print_ubi_buffer(const ubi_buffer *buf);
 void test_ubi_compute_public_key(void);
-void test_ubi_create_attestation_key(void);
+void test_ubi_create_attestation_key(uint8_t *policy_data, size_t policy_len, int curve_type);
 void print_ubi_create_attestation_key_out(const struct ubi_create_attestation_key_out *out);
 void print_ubi_create_attestation_key_out(const struct ubi_create_attestation_key_out *out);
 void test_ubi_load_attestation_key(void);
@@ -160,42 +160,32 @@ void test_ubi_compute_public_key(void)
     free(out);  
 }
 
-void test_ubi_create_attestation_key(void);
-
-void test_ubi_create_attestation_key(void) {
-    // Input structure
+void test_ubi_create_attestation_key(uint8_t *policy_data, size_t policy_len, int curve_type) {
     struct ubi_create_attestation_key_in in;
-    in.curve_type = BNP_256; // Set a valid curve type for the test
     struct ubi_buffer policy;
-    uint8_t policy_data[] = {0x01, 0x02, 0x03, 0x04}; // Example policy data
     policy.buffer = policy_data;
-    policy.buffer_len = sizeof(policy_data);
+    policy.buffer_len = policy_len;
     in.policy = &policy;
+    in.curve_type = curve_type;
 
-    // Output structure
     struct ubi_create_attestation_key_out *out = NULL;
-
-    // Call the function to test
     int result = ubi_create_attestation_key(&in, &out);
 
-    // Assertions
-    assert(result == UBI_SUCCESS); // Ensure function succeeded
-    assert((*out).seed != NULL);
-    assert((*out).seed->buffer_len == SHA256_DIGEST_LENGTH);
-    assert((*out).hash_private_key != NULL);
-    assert((*out).hash_private_key->buffer_len == SHA256_DIGEST_LENGTH);
-    assert((*out).public_key != NULL);
-    assert((*out).public_key->buffer_len == 65); // Mocked public key length
-    assert((*out).name != NULL);
-    assert((*out).name->buffer_len == KEY_NAME_LENGTH);
+    assert(result == UBI_SUCCESS);
+    assert(out->seed != NULL);
+    assert(out->seed->buffer_len == SHA256_DIGEST_LENGTH);
+    assert(out->hash_private_key != NULL);
+    assert(out->hash_private_key->buffer_len == SHA256_DIGEST_LENGTH);
+    assert(out->public_key != NULL);
+    assert(out->public_key->buffer_len == 65);
+    assert(out->name != NULL);
+    assert(out->name->buffer_len == KEY_NAME_LENGTH);
+    assert(out->name->buffer[0] == RH_NULL);
+    assert(out->name->buffer[1] == ALG_SHA256);
 
-    // Check if the first two bytes of name are as expected
-    assert((*out).name->buffer[0] == RH_NULL);
-    assert((*out).name->buffer[1] == ALG_SHA256);
+    printf("Attestation key created successfully.\n");
 
-    // Cleanup
     free_ubi_create_attestation_key_out(out);
-
 }
 void test_ubi_load_attestation_key(void) {
     // Step 1: Create an attestation key
@@ -417,10 +407,50 @@ void test_ubi_load_migratable_key(void) {
 
 
 
-int main(void) {
-    // Run the test
+// int main(void) {
+//     // Run the test
+//     test_ubi_compute_public_key();
+//     test_ubi_create_attestation_key();
+//     test_ubi_load_attestation_key();
+//     test_ubi_load_migratable_key();
+//     test_ubi_create_migratable_key();
+//     printf("Test passed successfully!\n");
+//     return 0;
+// }
+
+int main(int argc, char *argv[]) {
+    if (argc == 1) {
+        // No arguments: use hardcoded values
+        printf("Using default hardcoded policy and curve.\n");
+        uint8_t default_policy[] = {0x01, 0x02, 0x03, 0x04};
+        test_ubi_create_attestation_key(default_policy, sizeof(default_policy), BNP_256);
+    } else if (argc == 3) {
+        // Argument mode: expects a hex policy and a curve type
+        char *policy_hex = argv[1];
+        int curve_type = atoi(argv[2]);
+
+        size_t policy_len = strlen(policy_hex) / 2;
+        uint8_t *policy_data = malloc(policy_len);
+        if (!policy_data) {
+            perror("malloc");
+            return 1;
+        }
+
+        for (size_t i = 0; i < policy_len; i++) {
+            sscanf(&policy_hex[i * 2], "%2hhx", &policy_data[i]);
+        }
+
+        printf("Using provided policy and curve.\n");
+        test_ubi_create_attestation_key(policy_data, policy_len, curve_type);
+        free(policy_data);
+    } else {
+        fprintf(stderr, "Usage:\n");
+        fprintf(stderr, "  %s                 # Run with hardcoded data\n", argv[0]);
+        fprintf(stderr, "  %s <policy_hex> <curve_type>  # Run with arguments\n", argv[0]);
+        return 1;
+    }
+
     test_ubi_compute_public_key();
-    test_ubi_create_attestation_key();
     test_ubi_load_attestation_key();
     test_ubi_load_migratable_key();
     test_ubi_create_migratable_key();
