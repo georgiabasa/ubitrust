@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <x86intrin.h>
 #include <ubi_crypt/rand.h>
 #include <ubi_crypt/numeric.h>
 #include <ubi_common/errors.h>
@@ -53,48 +52,8 @@ void test_ubi_random_bytes_mod(void) {
 
 
 
-double get_cpu_frequency(void);
-
-double get_cpu_frequency(void) {
-    FILE *fp = fopen("/proc/cpuinfo", "r");
-    if (!fp) {
-        perror("Failed to read /proc/cpuinfo");
-        return -1.0;
-    }
-
-    char buffer[1024];
-    double cpu_mhz = 0.0;
-
-    while (fgets(buffer, sizeof(buffer), fp)) {
-        if (sscanf(buffer, "cpu MHz\t: %lf", &cpu_mhz) == 1) {
-            fclose(fp);
-            return cpu_mhz * 1e6; // Convert MHz to Hz
-        }
-    }
-
-    fclose(fp);
-    return -1.0; // Failed to retrieve frequency
-}
-
 
 int main(void) {
-    unsigned char output[RANDOM_BYTES_SIZE];
-    int ret = 0;
-
-    // Generate random bytes
-    ret = ubi_random_bytes(NULL, output, RANDOM_BYTES_SIZE);
-
-    if (ret != 0) {
-        printf("Failed to generate random bytes\n");
-        return 1;
-    }
-
-    // Print the generated random bytes in hexadecimal format
-    printf("Generated random bytes: ");
-    for (int i = 0; i < RANDOM_BYTES_SIZE; i++) {
-        printf("%02x", output[i]);
-    }
-    printf("\n");
 
     test_ubi_random_bytes_mod();
 

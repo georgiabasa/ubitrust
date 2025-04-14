@@ -88,7 +88,11 @@ $(MIRACL_DIR):
 	}
 	
 $(MBEDTLS_DIR)/Makefile: $(MBEDTLS_DIR)
-	@$(MAKE) -C $(MBEDTLS_DIR) CROSS_COMPILE=$(CROSS_COMPILE) CC=$(CROSS_COMPILE)gcc AR=$(CROSS_COMPILE)ar > /dev/null
+	@if [ -z "$(CROSS_COMPILE)" ]; then \
+		$(MAKE) -C $(MBEDTLS_DIR) CROSS_COMPILE="$(CROSS_COMPILE)" CC="$(CROSS_COMPILE)gcc" AR="$(CROSS_COMPILE)ar" > /dev/null; \
+	else \
+		$(MAKE) -C $(MBEDTLS_DIR) CROSS_COMPILE="$(CROSS_COMPILE)" CC="$(CROSS_COMPILE)gcc" AR="$(CROSS_COMPILE)ar" no_test > /dev/null; \
+	fi
 
 # Download the latest mbedtls version if it doesn't already exist
 $(MBEDTLS_DIR):
@@ -127,7 +131,7 @@ miracl: $(MIRACL_DIR)
 		echo "Building MIRACL Core for $(BITNESS)-bit system..."; \
 		{ \
 			cd $(MIRACL_BUILD_DIR); \
-			python3 config$(BITNESS).py test; \
+			CC=$(CROSS_COMPILE)gcc python3 config$(BITNESS).py test; \
 		}; \
 	fi
 
