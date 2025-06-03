@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "ec.h": "c"
+        "ec.h": "c",
+        "stdio.h": "c",
+        "rand.h": "c",
+        "structs.h": "c"
     }
 }
