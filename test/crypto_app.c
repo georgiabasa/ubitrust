@@ -75,6 +75,39 @@ struct group_generator generate_group_generator(void) {
     
 }
 
+struct ubi_ec_point_add_out* aggregate_commitments(struct ubi_buffer **commitments, int count) {
+    if (count <=0 || commitments == NULL) {
+        printf("Invalid input for aggregation\n");
+        return NULL;
+    }
+
+    struct ubi_ec_point_add_in add_in = {0};
+    struct ubi_ec_point_add_out *add_out = NULL;
+
+    add_in.curve_type = BNP_256;
+    add_in.points_num = count;
+
+    add_in.points = malloc(sizeof(struct ubi_buffer *) * count);
+    if (!add_in.points) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+
+    for (int i = 0; i < count; i++) {
+        add_in.points[i] = commitments[i];
+    }
+
+    int ret = ubi_ec_point_add(&add_in, &add_out);
+    free(add_in.points);
+
+    if (ret != UBI_SUCCESS) {
+        printf("ubi_ec_point_add failed: %d\n", ret);
+        return NULL;
+    }
+
+    return add_out;
+}
+
 int main() {
     int n;
     mbedtls_ecp_group *grp = NULL;
@@ -88,12 +121,12 @@ int main() {
         }
     } while (n <= 0);
 
-    // Step 2: Initialize EC group (BNP256)
+    //find q
     if (ubi_get_ec_group_bnp256(&grp) != UBI_SUCCESS) {
         printf("Failed to get EC group\n");
         return -1;
     }
-
+    //memory for scalars and group generators
     struct scalar *scalars = malloc((size_t)n * sizeof(struct scalar));
     struct group_generator *generators = malloc((size_t)n * sizeof(struct group_generator));
     if (!scalars || !generators) {
@@ -106,7 +139,7 @@ int main() {
         printf("Memory allocation failed for generator pointers\n");
         return -1;
     }
-
+    //commit input structure
     struct ubi_commit_in commit_in = {0};
     struct ubi_commit_out *commit_out = NULL;
 
@@ -116,7 +149,7 @@ int main() {
 
     for (int i = 0; i < n; ++i) {
 
-        // Generate n random scalars mod q
+        //generate n random scalars mod q
         scalars[i] = generate_scalar_modulo_q(grp);
         if (!scalars[i].buffer) {
             printf("Failed to generate scalar %d\n", i);
@@ -127,7 +160,7 @@ int main() {
             printf("%02x", scalars[i].buffer[j]);
         printf("\n");
 
-        // Generate n group generators
+        //generate n group generators
         generators[i] = generate_group_generator();
         if (!generators[i].buffer) {
             printf("Failed to generate group generator %d\n", i);
@@ -140,6 +173,10 @@ int main() {
         
         //store generator pointers
         gen_ptrs[i] = malloc(sizeof(struct ubi_buffer));
+        if (!gen_ptrs[i]) {
+            printf("Memory allocation failed for generator pointer %d\n", i);
+            continue;
+        }
         gen_ptrs[i]->buffer = generators[i].buffer;
         gen_ptrs[i]->buffer_len = generators[i].length;
     }
@@ -162,6 +199,19 @@ int main() {
                 printf("%02x", commit_out->commitment[i]->buffer[j]);
             }
             printf("\n");
+        }
+
+        //aggregate commitments
+        struct ubi_ec_point_add_out *add_out = aggregate_commitments(commit_out->commitment, commit_out->commit_num);
+        if (add_out == NULL) {
+            printf("Failed to aggregate commitments\n");
+        } else {
+            printf("Aggregated commitment point (C = sum Ci): \n");
+            for (size_t j = 0; j < add_out->point->buffer_len; j++) {
+                printf("%02x", add_out->point->buffer[j]);
+            }
+            printf("\n");
+            free_ubi_ec_point_add_out(add_out);
         }
     }
 
