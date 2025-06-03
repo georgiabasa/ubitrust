@@ -1,14 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mbedtls/ecp.h>
 #include <ubi_crypt/rand.h>
 #include <ubi_crypt/ec.h>
 #include <ubi_common/errors.h>
+#include <ubi_common/macros.h>
+#include <ubi_common/structs.h>
+
 
 #define RANDOM_BYTES_SIZE 32  // for 256-bit curve
 #define MAX_ORDER_BYTES 32     // Maximum bytes for order of curve (BNP256)
 
 struct scalar {
+    uint8_t *buffer;
+    size_t length;
+};
+
+struct group_generator {
     uint8_t *buffer;
     size_t length;
 };
@@ -45,6 +54,27 @@ struct scalar generate_scalar_modulo_q(mbedtls_ecp_group *grp) {
     return result;
 }
 
+struct group_generator generate_group_generator(void) {
+    struct group_generator result = {NULL, 0};
+
+    struct ubi_compute_group_generator_in gen_in = { .curve_type = BNP_256 };
+    struct ubi_compute_group_generator_out *gen_out = NULL;
+
+    if (ubi_compute_group_generator(&gen_in, &gen_out) != UBI_SUCCESS || !gen_out || !gen_out->generator) {
+        return result;
+    }
+
+    result.length = gen_out->generator->buffer_len;
+    result.buffer = malloc(result.length);
+    if (result.buffer) {
+        memcpy(result.buffer, gen_out->generator->buffer, result.length);
+    }
+
+    free_ubi_compute_group_generator_out(gen_out);
+    return result;
+    
+}
+
 int main() {
     int n;
     mbedtls_ecp_group *grp = NULL;
@@ -64,8 +94,9 @@ int main() {
         return -1;
     }
 
-    struct scalar *scalars = malloc(n * sizeof(struct scalar));
-    if (!scalars) {
+    struct scalar *scalars = malloc((size_t)n * sizeof(struct scalar));
+    struct group_generator *generators = malloc((size_t)n * sizeof(struct group_generator));
+    if (!scalars || !generators) {
         printf("Memory allocation failed\n");
         return -1;
     }
@@ -83,12 +114,27 @@ int main() {
             }
             printf("\n");
         }
+
+        // Generate n group generators
+        generators[i] = generate_group_generator();
+        if (!generators[i].buffer) {
+            printf("Failed to generate group generator %d\n", i);
+        } else {
+            printf("Group generator G[%d]: ", i);
+            for (size_t j = 0; j < generators[i].length; j++) {
+                printf("%02x", generators[i].buffer[j]);
+            }
+            printf("\n");
+        }
     }
 
+    //free all buffers
     for (int i = 0; i < n; ++i) {
         free(scalars[i].buffer);
+        free(generators[i].buffer);
     }
     free(scalars);
+    free(generators);
 
     return 0;
 }
