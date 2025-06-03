@@ -101,40 +101,79 @@ int main() {
         return -1;
     }
 
+    struct ubi_buffer **gen_ptrs = calloc((size_t)n, sizeof(struct ubi_buffer *));
+    if (!gen_ptrs) {
+        printf("Memory allocation failed for generator pointers\n");
+        return -1;
+    }
+
+    struct ubi_commit_in commit_in = {0};
+    struct ubi_commit_out *commit_out = NULL;
+
+    commit_in.curve_type = BNP_256;
+    commit_in.commit_num = n;
+    commit_in.points = gen_ptrs;
+
     for (int i = 0; i < n; ++i) {
 
         // Generate n random scalars mod q
         scalars[i] = generate_scalar_modulo_q(grp);
         if (!scalars[i].buffer) {
             printf("Failed to generate scalar %d\n", i);
-        } else {
-            printf("Scalar r[%d]: ", i);
-            for (size_t j = 0; j < scalars[i].length; j++) {
-                printf("%02x", scalars[i].buffer[j]);
-            }
-            printf("\n");
+            continue;
         }
+        printf("Scalar r[%d]: ", i);
+        for (size_t j = 0; j < scalars[i].length; j++)
+            printf("%02x", scalars[i].buffer[j]);
+        printf("\n");
 
         // Generate n group generators
         generators[i] = generate_group_generator();
         if (!generators[i].buffer) {
             printf("Failed to generate group generator %d\n", i);
-        } else {
-            printf("Group generator G[%d]: ", i);
-            for (size_t j = 0; j < generators[i].length; j++) {
-                printf("%02x", generators[i].buffer[j]);
+            continue;
+        }
+        printf("Group generator G[%d]: ", i);
+        for (size_t j = 0; j < generators[i].length; j++) 
+            printf("%02x", generators[i].buffer[j]);
+        printf("\n");
+        
+        //store generator pointers
+        gen_ptrs[i] = malloc(sizeof(struct ubi_buffer));
+        gen_ptrs[i]->buffer = generators[i].buffer;
+        gen_ptrs[i]->buffer_len = generators[i].length;
+    }
+
+    //use the first scalar as secret for all commitments
+    struct ubi_buffer secret = {
+        .buffer = scalars[0].buffer,
+        .buffer_len = scalars[0].length
+    };
+    commit_in.commited_secret = &secret;
+
+    //compute commitments
+    if (ubi_commit(&commit_in, &commit_out) != UBI_SUCCESS) {
+        printf("ubi_commit failed\n");
+    } else {
+        printf("ubi_commit succeeded\n");
+        for (int i = 0; i < commit_out->commit_num; i++) {
+            printf("Commitment C[%d]: ", i);
+            for (size_t j = 0; j < commit_out->commitment[i]->buffer_len; j++) {
+                printf("%02x", commit_out->commitment[i]->buffer[j]);
             }
             printf("\n");
         }
     }
 
-    //free all buffers
-    for (int i = 0; i < n; ++i) {
+    //cleanup
+    for (int i = 0; i < n; i++) {
         free(scalars[i].buffer);
-        free(generators[i].buffer);
+        if (gen_ptrs[i]) free(gen_ptrs[i]);
     }
     free(scalars);
     free(generators);
+    free(gen_ptrs);
+    free_ubi_commit_out(commit_out);
 
     return 0;
 }
